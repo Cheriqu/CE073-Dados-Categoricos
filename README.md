@@ -1,44 +1,45 @@
-# Planejamento de Experimentos (CE213) - UFPR
+# Análise de Dados Categoricos (CE073) - UFPR
 
-Este repositório contém a aplicação prática de métodos estatísticos voltados ao planejamento, condução e análise de experimentos. O foco é extrair o máximo de informação com o menor número de ensaios, garantindo a validade estatística das conclusões.
+Este repositório reúne os trabalhos práticos da disciplina de Análise de Dados Categoricos. O foco central é a modelagem de dados discretos, onde a suposição de normalidade não é atendida, exigindo o uso de **Modelos Lineares Generalizados (GLMs)**.
 
----
+
 
 ## 🛠️ Conteúdo Técnico
 
-Os trabalhos documentam a evolução desde os conceitos fundamentais até a otimização de sistemas complexos:
+Os projetos demonstram a progressão da análise exploratória até a modelagem avançada:
 
-### 1. Fundamentos e Experimentos Fatoriais $2^k$ (Trabalho 1)
-* **Princípios Básicos:** Aleatorização, repetição e blocagem.
-* **Fatoriais Completos:** Análise de experimentos $2^k$ para identificação de efeitos principais e interações.
+### 1. Associação e Tabelas de Contingência (Trabalho 1)
+* **Testes de Independência:** Qui-Quadrado de Pearson e Teste Exato de Fisher.
+* **Medidas de Efeito:** Cálculo e interpretação de Razão de Chances (Odds Ratio) e Risco Relativo.
+* **Análise Estratificada:** Controle de variáveis de confusão (Paradoxo de Simpson).
 
-### 2. Blocagem e Comparação de Médias (Trabalho 2)
-* **Delineamento em Blocos Completos Casualizados (DBC):** Controle de variabilidade externa.
-* **ANOVA e Testes de Comparação:** Identificação de diferenças significativas entre tratamentos (Tukey, Duncan).
+### 2. Regressão Logística Binária (Trabalho 2)
+* **Modelagem GLM:** Ajuste de modelos para respostas binárias (Sucesso/Fracasso) utilizando a função de ligação *logit*.
+* **Interpretação:** Análise dos coeficientes em termos de log-odds.
+* **Seleção de Variáveis:** Métodos de Stepwise e análise de deviance (AIC/BIC).
 
-### 3. Experimentos Fracionados e Triagem (Trabalho 3)
-* **Fatoriais Fracionados $2^{k-p}$:** Estratégias de triagem (screening) quando o número de fatores é elevado.
-* **Análise de Resolução e Aliasing:** Entendimento das estruturas de confusão entre efeitos.
+### 3. Extensões do Modelo Logístico (Trabalho 3)
+* **Diagnóstico de Ajuste:** Análise de resíduos (Deviance, Pearson) e pontos de alavanca.
+* **Curva ROC e Acurácia:** Avaliação do poder preditivo do modelo classificador.
+* **Regressão Multinomial/Ordinal:** Tratamento de respostas com mais de duas categorias.
 
-### 4. Metodologia de Superfície de Resposta - RSM (Trabalho 4)
-* **Modelagem de Segunda Ordem:** Ajuste de modelos quadráticos para encontrar curvaturas na resposta.
-* **Otimização de Processos:** Localização de pontos ótimos (máximos, mínimos ou sela) e uso de funções de desejabilidade.
-
-
+### 4. Dados de Contagem e Poisson (Trabalho 4)
+* **Regressão de Poisson:** Modelagem de taxas e contagens de eventos raros.
+* **Superdispersão:** Identificação e tratamento de variância excessiva (uso de quase-verossimilhança ou Binomial Negativa).
 
 ---
 
 ## 🚀 Tecnologias e Implementação
 
 * **Linguagem:** R.
-* **Pacotes Chave:** `DoE.base`, `FrF2`, `rsm`, `ggplot2`.
-* **Relatórios:** R Markdown com diagnósticos de resíduos e validação de pressupostos (Normalidade e Homocedasticidade).
+* **Pacotes Principais:** `stats` (glm), `car`, `pROC`.
+* **Relatórios:** Documentação completa em R Markdown, combinando teoria estatística com interpretação prática dos outputs.
 
 ---
 
 ## 📂 Estrutura de Arquivos
 
-* `Trabalho1` a `Trabalho4`: Cada pasta contém o arquivo `.Rmd` (código) e o relatório final em `.pdf`.
+* `Trabalho1` a `Trabalho4`: Pares de arquivos `.Rmd` (código reprodutível) e `.pdf` (relatório final) cobrindo desde a análise descritiva até a modelagem complexa.
 
 ---
 **Autor:** Luiz Henrique Barretta Francisco  
