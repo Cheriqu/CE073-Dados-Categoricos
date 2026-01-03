@@ -1,0 +1,269 @@
+---
+lang: "pt-br"
+output:
+  pdf_document:
+    includes:
+      in_header: mystyles.tex
+  html_document:
+    df_print: paged
+---
+
+\begin{titlepage}
+\centering
+\includegraphics[width=3cm]{logo.jpg}
+\vfill
+{\Huge CE073 - Análise de Dados Categóricos\par}
+{\huge Trabalho No. 3 \par}
+\vspace{1cm}
+{\Large Luiz Henrique Barretta Francisco - GRR20213026 \par}
+\vfill
+{\large novembro/2023 \par}
+\end{titlepage}
+
+
+### 8-a) O que significaria independência e dependência entre as linhas e colunas no contexto de DAVFs? Qual conclusão você acha que os pesquisadores prefeririam para justificar seu sistema de classificação? Explique.
+
+A independência entre linhas e colunas mostraria a ineficiência das classificações em relação aos sintomas, dado que nesse cenário, qual fosse a classificação assinalada não resultaria em diferença nas probabilidades dos sintomas. No exemplo, sejam $S$ e $C$ as categorias para os sintomas e as classificações, respectivamente, e $s_0$ o evento equivalente à hemorragia. A independência nesse caso seria dada se $P(S = s_0| C = c_i) = P(S = s_0)$, ou seja, a probabilidade de um sintoma de hemorragia é independente da classificação aplicada.
+
+Um resultado estatístico que rejeita a independência, ou seja, que admite a dependência entre linhas e colunas, é suficiente para justificar a proposta do sistema de classificação e, portanto, é o cenário desejado pelos pesquisadores.
+
+### 8-b) Cognard et ai. (1995) afirmam que “a tabela de contingência mostra uma diferença estatisticamente significativa (P = 0,0001)” sem mencionar o teste estatístico específico realizado. Realize um teste qui-quadrado de Pearson para independência para produzir um resultado de significância semelhante.
+
+```{r, warning=FALSE, echo=TRUE, results=TRUE, message=FALSE}
+require(knitr)
+sintomas <- c("Hemorragia","Hipertensão intracraniana","Déficit neurológico",
+              "Convulsões","Deficiência cardíaca","Mielopatia","Sintomas não agressivos")
+classificacoes <- c("1", "2a", "2b", "2a e 2b", "3", "4", "5")
+davf <- matrix(c(0, 1, 0, 0, 0, 0, 83, 0, 8, 0, 1, 1, 0, 17, 2, 1, 0, 0, 0, 0, 7,
+                 1, 2, 6, 2, 1, 0, 6, 10, 0, 8, 1, 0, 0, 6, 19, 4, 2, 3, 0, 0, 1,
+                 5, 1, 0, 0, 0, 6, 0),
+                  nrow = length(sintomas), ncol = length(classificacoes),
+                  dimnames = list(sintomas, classificacoes))
+kable(davf)
+chisq.test(x = davf, correct = FALSE)
+```
+
+### 8-c) É improvável que pacientes com DAVF apresentem apenas um sintoma. Por exemplo, um paciente pode ter hipertensão intracraniana e convulsões enquanto possui uma classificação de nível 3. De fato, as contagens totais da tabela podem ser maiores ou menores que o número de pacientes. Esse cenário alternativo invalidaria o uso do teste qui-quadrado de Pearson nessa situação? Explique.
+
+O uso do teste qui-quadrado de Pearson é apropriado quando cada observação contribui para uma única célula em uma tabela de contingência, onde se busca analisar a independência entre duas variáveis categóricas. No entanto, se os pacientes com DAVF puderem contribuir para nenhuma, uma ou mais de uma célula na tabela devido à possibilidade de apresentarem múltiplos sintomas e/ou classificações, os pressupostos do teste qui-quadrado são violados. Isso ocorre porque as observações não são independentes, tornando a análise inadequada. Nesse cenário, seria mais apropriado utilizar métodos estatísticos como a análise de regressão logística, que leva em consideração múltiplas variáveis independentes e permite modelar a probabilidade de ocorrência de sintomas de forma mais adequada. Portanto, o teste qui-quadrado de Pearson não seria válido para avaliar a independência entre as variáveis nessas condições.
+
+### 11-a) As variáveis explicativas precisam ser reformatadas antes de continuar.
+
+```{r, warning=FALSE, echo=TRUE, results=TRUE, message=FALSE}
+cereal = read.csv(file = "http://leg.ufpr.br/~lucambio/ADC/cereal_dillons.csv")
+stand01 <- function (x) { (x - min(x))/( max(x) - min(x)) }
+cereal <- data.frame (Shelf = cereal$Shelf,
+                      sugar = stand01 (x = cereal$sugar_g / cereal$size_g ), 
+                      fat = stand01 (x = cereal$fat_g / cereal$size_g ), 
+                      sodium = stand01 (x = cereal$sodium_mg / cereal$size_g ))
+head(cereal)
+```
+
+### 11-b) Construa gráficos de box-plots (caixas) lado a lado com gráficos de pontos sobrepostos para cada uma das variáveis explicativas. Além disso, construa um gráfico de coordenadas paralelas para as variáveis explicativas e o número da prateleira. Discuta se existem possíveis diferenças de conteúdo entre as prateleiras.
+
+```{r, warning=FALSE, echo=TRUE, results=TRUE, message=FALSE}
+boxplot(formula = sugar ~ Shelf , data = cereal , ylab = "Sugar", xlab = "Prateleira", 
+          pars = list (outpch = NA)) 
+stripchart(x = cereal$sugar ~ cereal$Shelf , lwd = 2, col = "red", 
+          method = "jitter", vertical = TRUE , pch = 1, add = TRUE)
+require(MASS)
+cereal2 <- data.frame(amostra = 1:nrow(cereal), cereal[,2:4])
+cereal.colors <- ifelse(cereal$Shelf=="1", "black", 
+                        ifelse(cereal$Shelf=="2", "red",
+                               ifelse(cereal$Shelf=="3", "green",
+                                                                  "blue")))
+cereal.lty <- ifelse(cereal$Shelf=="1", "solid", 
+                        ifelse(cereal$Shelf=="2", "dashed",
+                               ifelse(cereal$Shelf=="3", "solid",
+                                                                   "dashed")))
+parcoord(x = cereal2, col = cereal.colors, lty = cereal.lty)
+legend(x = 2.78, y = 0.955, legend = c("1", "2", "3", "4"), lty = unique(cereal.lty), 
+       col = unique(cereal.colors), cex = 0.75, bty = "n", text.col = "black")
+```
+
+Observou-se as seguintes tendências nas prateleiras:
+
+1. Prateleira 1: Baixo nível de _fat_ e alto de _sodium_.
+2. Prateleira 2: Alto nível de _sugar_.
+3. Prateleira 3: Aparentemente aleatório, sem nenhum padrão sistemático.
+4. Prateleira 4: Níveis entre baixo e médio das três variaveis: _sugar_, _fat_ e _sodium_.
+
+### 11-c) A resposta tem valores de 1, 2, 3 e 4. Em que cenário seria desejável levar em conta a ordinalidade. Você acha que isso ocorre aqui?
+
+A consideração da ordinalidade é relevante no cenário em que a variável resposta é o número da prateleira em um supermercado. Nesse contexto, a ordem das prateleiras, numeradas de baixo (1) para cima (4), é intrinsecamente significativa, uma vez que a localização das caixas de cereais nas diferentes prateleiras afeta a visibilidade e a probabilidade de compra. Portanto, a ordem natural das prateleiras desempenha um papel fundamental na interpretação dos resultados, tornando a consideração da ordinalidade apropriada ao analisar como os níveis de teor de açúcar, gordura e sódio dos cereais influenciam sua localização nas prateleiras.
+
+### 11-d) Estime um modelo de regressão multinomial com formas lineares das variáveis açúcar, gordura e sódio. Realize testes da razão de verossimilhanças (LRTs) para examinar a importância de cada variável explicativa.
+
+```{r, warning=FALSE, echo=TRUE, results=TRUE, message=FALSE}
+require(package = nnet)
+mod.fit <- multinom(Shelf ~ sugar + fat + sodium, data = cereal, trace = FALSE)
+summary(mod.fit)
+require(package = car)
+Anova(mod.fit)
+```
+
+Com base na análise de deviance (LRT) para o modelo de regressão multinomial, pode-se observar que as variáveis explicativas _sugar_ e _sodium_ são estatisticamente significativas, uma vez que apresentam p-valores muito baixos, indicando que essas variáveis têm um impacto significativo nas categorias da variável resposta _Shelf_. Em contraste, a variável _fat_ não é estatisticamente significativa, pois seu p-valor é relativamente alto (0.1522), sugerindo que a presença ou ausência de gordura nos cereais pode não ter um efeito significativo na determinação da prateleira em que são colocados nas mercearias. Portanto, _sugar_ e _sodium_ emergem como as variáveis explicativas mais relevantes na explicação das prateleiras de cereais matinais em supermercados, enquanto _fat_ não demonstra significância estatística.
+
+### 11-e) Mostre que não há interações significativas entre as variáveis explicativas (incluindo uma interação entre as três variáveis).
+
+```{r, warning=FALSE, echo=TRUE, results=TRUE, message=FALSE}
+mod.fit2 <- multinom(Shelf ~ sugar + sodium, data = cereal, trace = FALSE)
+mod.fit.iter <- multinom(Shelf ~ sugar*fat*sodium , data = cereal, trace = FALSE)
+summary(mod.fit.iter)
+Anova(mod.fit.iter)
+anova(mod.fit2, mod.fit.iter)
+```
+
+O teste de razão de verossimilhanças (LRT) entre dois modelos multinomiais, um com apenas as variáveis _sugar_ e _sodium_ e outro mais complexo com a inclusão das interações todas as três variáveis, não revelou uma melhora significativa ao adicionar as interações. O teste de razão de verossimilhanças comparando os dois modelos não mostrou diferença estatisticamente significativa entre eles. Isso sugere que as interações entre as variáveis explicativas não desempenham um papel significativo na explicação das categorias da variável resposta _Shelf_ no contexto do modelo multinomial. Portanto, o modelo mais simples, sem as interações, é preferível, uma vez que fornece uma explicação adequada para os dados.
+
+### 11-f) Para uma porção de 28 gramas, seu teor de açúcar é de 12 gramas, o teor de gordura é de 0.5 gramas e o teor de sódio é de 130 miligramas. Estime as probabilidades de prateleira para Apple Jacks.
+
+```{r, warning=FALSE, echo=TRUE, results=TRUE, message=FALSE}
+cereal3 = read.csv(file = "http://leg.ufpr.br/~lucambio/ADC/cereal_dillons.csv")
+kellogs <- data.frame(sugar = (12/28 - min(cereal3$sugar_g/cereal3$size_g))/
+            (max(cereal3$sugar_g/cereal3$size_g)-min(cereal3$sugar_g/cereal3$size_g)),
+                      fat = (0.5/28 -  min(cereal3$sugar_g/cereal3$size_g))/
+            (max(cereal3$fat_g/cereal3$size_g)-min(cereal3$fat_g/cereal3$size_g)),
+                      sodium = (130/28 -  min(cereal3$sugar_g/cereal3$size_g))/
+            (max(cereal3$sodium_g/cereal3$size_g)-min(cereal3$sodium_g/cereal3$size_g)))
+round(predict(object = mod.fit2, newdata = kellogs, type = "probs"),2)
+```
+
+Para o cereal especificado, as probabilidades de estar na prateleira 3 e 4 são de 46% e 51%, respectivamente.
+
+### 11-g) Construa um gráfico onde a probabilidade estimada de uma prateleira está no eixo y e o teor de açúcar está no eixo x. Use o conteúdo médio geral de gordura e sódio como os valores variáveis correspondentes no modelo. Interprete o gráfico em relação ao teor de açúcar.
+
+```{r, warning=FALSE, echo=TRUE, results=TRUE, message=FALSE}
+sugar.values <- seq(from = 0, to = 1, by = 0.01)
+pi.sugar <- data.frame(sugar.values, predict(object = mod.fit2,
+                                     newdata = data.frame(sugar = sugar.values,
+                                                          fat = mean(cereal$fat),
+                                                          sodium = mean(cereal$sodium)),
+                                     type = "probs"))
+legend_data <- data.frame(label = c("X1", "X2", "X3", "X4"),
+                          color = c("blue", "red", "green", "black"))
+require(ggplot2)
+p <- ggplot(data = pi.sugar, aes(x = sugar.values))
+p + geom_smooth(aes(y = X1, color = "X1"), alpha = 0.2, method = "gam") +
+    geom_smooth(aes(y = X2, color = "X2"), alpha = 0.2, method = "gam") +
+    geom_smooth(aes(y = X3, color = "X3"), alpha = 0.2, method = "gam") +
+    geom_smooth(aes(y = X4, color = "X4"), alpha = 0.2, method = "gam") +
+    scale_color_manual(values = c("X1" = "blue", "X2" = "red",
+                                  "X3" = "green", "X4" = "black"), name = NULL) +
+    labs(title = "Probabilidade para as prateleiras 1, 2, 3 e 4",
+         x = "Sugar", y = "Probabilidade")
+```
+
+### 11-h) Estime as razões de chances e calcule os intervalos de confiança correspondentes para cada variável explicativa. Relacione suas interpretações com os gráficos construídos para este exercício.
+
+```{r, warning=FALSE, echo=TRUE, results=TRUE, message=FALSE}
+sd.cereal <- apply (X = cereal2[,-c(1,3)], MARGIN = 2, FUN = sd)
+c.value <- sd.cereal
+round(c.value, 2)
+
+beta.hat2 <- coefficients (mod.fit2) [1 ,2:3]
+beta.hat3 <- coefficients (mod.fit2) [2 ,2:3]
+beta.hat4 <- coefficients (mod.fit2) [3 ,2:3]
+
+conf.beta <- confint (object = mod.fit2 , level = 0.95)
+ci.OR2 <- exp(c.value * conf.beta [2:3 ,1:2 ,1])
+ci.OR3 <- exp(c.value * conf.beta [2:3 ,1:2 ,2])
+ci.OR4 <- exp(c.value * conf.beta [2:3 ,1:2 ,3])
+
+results_df2 <- data.frame(
+  Odds_Ratio = round(exp(c.value * beta.hat2), 2),
+  Inverse_Odds_Ratio = round(1 / exp(c.value * beta.hat2), 2))
+results_ci2 <- data.frame(
+  CI = round(data.frame(low = ci.OR2[,1], up = ci.OR2[,2]), 2),
+  Inverse_CI = round(data.frame(low = 1/ci.OR2[,2], up = 1/ci.OR2[,1]), 2))
+kable(results_df2, caption = "Razão de Chances para Prateleira 2 vs. Prateleira 1")
+kable(results_ci2, caption = "Intervalos de Confiança para Prateleira 2 vs. Prateleira 1")
+```
+
+1. As chances estimadas de Prateleira 2 vs Prateleira 1 mudam em 1.38 vezes para um aumento de 0.27 em _sugar_ mantendo as outras variáveis constantes. De forma equivalente, as chances estimadas de Prateleira 2 vs Prateleira 1 mudam em 0.73 vezes para uma diminuição de 0.27 em _sugar_ mantendo as outras variáveis constantes.
+
+2. As chances estimadas de Prateleira 2 vs Prateleira 1 mudam em 0.04 vezes para um aumento de 0.23 em _sodium_ mantendo as outras variáveis constantes. De forma equivalente, as chances estimadas de Prateleira 2 vs Prateleira 1 mudam em 22.99 vezes para uma diminuição de 0.23 em _sodium_ mantendo as outras variáveis constantes.
+
+
+```{r, warning=FALSE, echo=TRUE, results=TRUE, message=FALSE}
+results_df3 <- data.frame(
+  Odds_Ratio = round(exp(c.value * beta.hat3), 2),
+  Inverse_Odds_Ratio = round(1 / exp(c.value * beta.hat3), 2))
+results_ci3 <- data.frame(
+  CI = round(data.frame(low = ci.OR3[,1], up = ci.OR3[,2]), 2),
+  Inverse_CI = round(data.frame(low = 1/ci.OR3[,2], up = 1/ci.OR3[,1]), 2))
+kable(results_df3, caption = "Razão de Chances para Prateleira 3 vs. Prateleira 1")
+kable(results_ci3, caption = "Intervalos de Confiança para Prateleira 3 vs. Prateleira 1")
+```
+
+3. As chances estimadas de Prateleira 3 vs Prateleira 1 mudam em 0.05 vezes para um aumento de 0.27 em _sugar_ mantendo as outras variáveis constantes. De forma equivalente, as chances estimadas de Prateleira 3 vs Prateleira 1 mudam em 18.91 vezes para uma diminuição de 0.27 em _sugar_ mantendo as outras variáveis constantes.
+
+4. As chances estimadas de Prateleira 3 vs Prateleira 1 mudam em 0.01 vezes para um aumento de 0.23 em _sodium_ mantendo as outras variáveis constantes. De forma equivalente, as chances estimadas de Prateleira 3 vs Prateleira 1 mudam em 189.13 vezes para uma diminuição de 0.23 em _sodium_ mantendo as outras variáveis constantes.
+
+```{r, warning=FALSE, echo=TRUE, results=TRUE, message=FALSE}
+results_df4 <- data.frame(
+  Odds_Ratio = round(exp(c.value * beta.hat4), 2),
+  Inverse_Odds_Ratio = round(1 / exp(c.value * beta.hat4), 2))
+results_ci4 <- data.frame(
+  CI = round(data.frame(low = ci.OR4[,1], up = ci.OR4[,2]), 2),
+  Inverse_CI = round(data.frame(low = 1/ci.OR4[,2], up = 1/ci.OR4[,1]), 2))
+kable(results_df4, caption = "Razão de Chances para Prateleira 4 vs. Prateleira 1")
+kable(results_ci4, caption = "Intervalos de Confiança para Prateleira 4 vs. Prateleira 1")
+```
+
+5. As chances estimadas de Prateleira 4 vs Prateleira 1 mudam em 0.06 vezes para um aumento de 0.27 em _sugar_ mantendo as outras variáveis constantes. De forma equivalente, as chances estimadas de Prateleira 4 vs Prateleira 1 mudam em 15.43 vezes para uma diminuição de 0.27 em _sugar_ mantendo as outras variáveis constantes.
+
+6. As chances estimadas de Prateleira 4 vs Prateleira 1 mudam em 0.01 vezes para um aumento de 0.23 em _sodium_ mantendo as outras variáveis constantes. De forma equivalente, as chances estimadas de Prateleira 4 vs Prateleira 1 mudam em 174.66 vezes para uma diminuição de 0.23 em _sodium_ mantendo as outras variáveis constantes.
+
+
+As interpretações 1, 3 e 5, apresentadas acima, estão de acordo com o gráfico de Probabilidade para as prateleiras de acordo com os valores de _sugar_, onde a razão de chances, comparada com a Prateleira 1, é muito maior para as Prateleiras 3 e 4 para valores pequenos de _sugar_, e  muito maior para a Prateleira 2 para valores altos de _sugar_, exatamente como o gráfico mostra.
+
+### 19) Realize uma análise para determinar quais guildas são mais afetadas ou menos afetadas pela degradação do habitat. 
+
+```{r, warning=FALSE, echo=TRUE, results=TRUE, message=FALSE}
+df <- data.frame(
+  Baixa = c(48, 131, 50, 115, 16, 19, 190),
+  Moderada = c(39, 139, 39, 57, 48, 20, 177),
+  Alta = c(8, 69, 2, 25, 20, 7, 100))
+Guildas <- c("AirAr", "LeafAr", "WoodAr", "GroundAr", "Fruit", "Seeds", "Nectar")
+kable(cbind(Guildas,df), caption = "Tabela cruzada de Aves Equatorianas capturadas por
+                                    Degradação de Habitat e Guilda de Fonte de Alimento")
+df_t <- t(df)
+colnames(df_t) <- Guildas
+parcoord(x = df_t, col = c("red", "grey", "blue"), var.label = TRUE)
+legend("topright", legend = c("Baixa", "Moderada", "Alta"),
+       fill = c("red", "grey", "blue"), bty = "n", title = "Degradação", x = 5.75, y = .8)
+```
+
+Conforme o gráfico de coordenadas paralelas mostra acima, é possível perceber uma correlação em que os ambientes com maior degradação tendem a ter menos aves capturadas para todas as Guildas, exceto a _Fruit_. Essa observação sugere que a degradação ambiental está associada a uma redução na diversidade de aves nas diferentes guildas ecológicas.
+
+Conforme sugere o enunciado, as quatro primeiras guildas são artrópedes, em contraponto com as 3 últimas guildas. A seguir, será adicionado uma variável indicativa representando quais Guildas são _Arth_ e a aplicação do teste Anova para modelos encaixados, que testa se a inclusão dela é necessária ou não no modelo.
+
+```{r, warning=FALSE, echo=TRUE, results=TRUE, message=FALSE}
+data <- data.frame(Guilda = rep(Guildas, 3),
+                  Arth = rep(c(rep(1,4),rep(0,3)),3),
+                  Degradacao = c(rep("Baixa",7), rep("Moderada",7), rep("Alta",7)),
+                  Contagem = c(df[,1], df[,2], df[,3]))
+data$Degradacao <- factor(data$Degradacao, levels = c("Baixa", "Moderada", "Alta"))
+data$Arth <- factor(data$Arth)
+
+mod.fit.ord.arth <- polr(Degradacao ~ Contagem + Guilda + Arth, data, method = "logistic")
+mod.fit.ord.guilda <- polr(Degradacao ~ Contagem + Guilda, data, method = "logistic")
+summary(mod.fit.ord.guilda)
+anova(mod.fit.ord.arth, mod.fit.ord.guilda)
+Anova(mod.fit.ord.guilda)
+```
+Com base na análise do teste ANOVA para modelos encaixados, a inclusão da variável _Arth_ não se mostrou necessária no modelo, indicando que não há diferença estatisticamente significativa entre as guildas ecológicas que são do tipo _Arth_ com as que não são.
+
+```{r, warning=FALSE, echo=TRUE, results=TRUE, message=FALSE}
+pi.hat <- predict(mod.fit.ord.guilda,type = "probs")
+pi.hat.class <- predict(mod.fit.ord.guilda,type = "class")
+comparacao <- data.frame(pi.hat,Degradacao=data$Degradacao,pi.hat.class)
+kable(comparacao)
+
+require(dplyr)
+comparacao <- comparacao %>% mutate(igual=ifelse(Degradacao==pi.hat.class,1,0))
+sum(comparacao$igual)/nrow(comparacao)
+```
+
+O modelo acertou a predição para 71,4% das observações, o que aparenta ser um resultado condizente com o problema, dado que se trata de um exercício com poucas variáveis explicativas.
